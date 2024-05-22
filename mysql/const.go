@@ -23,6 +23,7 @@ const (
 
 const (
 	OK_HEADER          byte = 0x00
+	AUTHMORE_HEADER    byte = 0x01
 	ERR_HEADER         byte = 0xff
 	EOF_HEADER         byte = 0xfe
 	LocalInFile_HEADER byte = 0xfb
@@ -41,6 +42,10 @@ const (
 	SERVER_STATUS_METADATA_CHANGED     uint16 = 0x0400
 	SERVER_QUERY_WAS_SLOW              uint16 = 0x0800
 	SERVER_PS_OUT_PARAMS               uint16 = 0x1000
+)
+
+const (
+	SERVER_CACHING_SHA2_PASSWORD_FAST_AUTH_SUCCESS = 3
 )
 
 const (
@@ -103,7 +108,7 @@ const (
 	CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA
 )
 
-//https://dev.mysql.com/doc/internals/en/com-query-response.html#packet-Protocol::ColumnType
+// https://dev.mysql.com/doc/internals/en/com-query-response.html#packet-Protocol::ColumnType
 const (
 	MYSQL_TYPE_DECIMAL byte = iota
 	MYSQL_TYPE_TINY

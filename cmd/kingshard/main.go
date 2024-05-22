@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"path"
 	"runtime"
 	"strings"
 	"syscall"
@@ -31,15 +30,9 @@ import (
 	"github.com/flike/kingshard/web"
 )
 
-var configFile *string = flag.String("config", "/etc/ks.yaml", "kingshard config file")
+var configFile *string = flag.String("config", "./etc/ks.yaml", "kingshard config file")
 var logLevel *string = flag.String("log-level", "", "log level [debug|info|warn|error], default error")
 var version *bool = flag.Bool("v", false, "the version of kingshard")
-
-const (
-	sqlLogName = "sql.log"
-	sysLogName = "sys.log"
-	MaxLogSize = 1024 * 1024 * 1024
-)
 
 var (
 	BuildDate    string
@@ -76,22 +69,10 @@ func main() {
 	}
 
 	//when the log file size greater than 1GB, kingshard will generate a new file
-	if len(cfg.LogPath) != 0 {
-		sysFilePath := path.Join(cfg.LogPath, sysLogName)
-		sysFile, err := golog.NewRotatingFileHandler(sysFilePath, MaxLogSize, 1)
-		if err != nil {
-			fmt.Printf("new log file error:%v\n", err.Error())
-			return
-		}
-		golog.GlobalSysLogger = golog.New(sysFile, golog.Lfile|golog.Ltime|golog.Llevel)
+	if len(cfg.Log) != 0 && cfg.Log == golog.LogOn {
+		//golog.GlobalSysLogger = golog.New(sysFile, golog.Lfile|golog.Ltime|golog.Llevel)
 
-		sqlFilePath := path.Join(cfg.LogPath, sqlLogName)
-		sqlFile, err := golog.NewRotatingFileHandler(sqlFilePath, MaxLogSize, 1)
-		if err != nil {
-			fmt.Printf("new log file error:%v\n", err.Error())
-			return
-		}
-		golog.GlobalSqlLogger = golog.New(sqlFile, golog.Lfile|golog.Ltime|golog.Llevel)
+		//golog.GlobalSqlLogger = golog.New(sqlFile, golog.Lfile|golog.Ltime|golog.Llevel)
 	}
 
 	if *logLevel != "" {

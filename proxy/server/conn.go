@@ -28,7 +28,7 @@ import (
 	"github.com/flike/kingshard/mysql"
 )
 
-//client <-> proxy
+// client <-> proxy
 type ClientConn struct {
 	sync.Mutex
 
@@ -49,7 +49,8 @@ type ClientConn struct {
 	user string
 	db   string
 
-	salt []byte
+	salt   []byte
+	plugin string
 
 	nodes  map[string]*backend.Node
 	schema *Schema
@@ -237,7 +238,7 @@ func (c *ClientConn) readHandshakeResponse() error {
 	}
 
 	//check password
-	checkAuth := mysql.CalcPassword(c.salt, []byte(c.proxy.users[c.user]))
+	checkAuth := mysql.CalcPassword(c.plugin, c.salt, c.proxy.users[c.user])
 	if !bytes.Equal(auth, checkAuth) {
 		golog.Error("ClientConn", "readHandshakeResponse", "error", 0,
 			"auth", auth,

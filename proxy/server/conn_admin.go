@@ -248,7 +248,6 @@ func (c *ClientConn) handleAdminHelp(ah *sqlparser.AdminHelp) error {
 		return err
 	}
 
-	defer file.Close()
 	rd := bufio.NewReader(file)
 	for {
 		line, err := rd.ReadString('\n')
@@ -420,7 +419,7 @@ func (c *ClientConn) handleShowProxyConfig() (*mysql.Resultset, error) {
 
 	rows = append(rows, []string{"Addr", c.proxy.cfg.Addr})
 	rows = append(rows, []string{"User_List", strings.Join(users, ",")})
-	rows = append(rows, []string{"LogPath", c.proxy.cfg.LogPath})
+	rows = append(rows, []string{"Log", c.proxy.cfg.Log})
 	rows = append(rows, []string{"LogLevel", c.proxy.cfg.LogLevel})
 	rows = append(rows, []string{"LogSql", c.proxy.logSql[c.proxy.logSqlIndex]})
 	rows = append(rows, []string{"SlowLogTime", strconv.Itoa(c.proxy.slowLogTime[c.proxy.slowLogTimeIndex])})
@@ -463,8 +462,8 @@ func (c *ClientConn) handleShowNodeConfig() (*mysql.Resultset, error) {
 	//var nodeRows [][]string
 	for name, node := range c.schema.nodes {
 		//"master"
-		idleConns,cacheConns,pushConnCount,popConnCount := node.Master.ConnCount()
-		
+		idleConns, cacheConns, pushConnCount, popConnCount := node.Master.ConnCount()
+
 		rows = append(
 			rows,
 			[]string{
@@ -482,7 +481,7 @@ func (c *ClientConn) handleShowNodeConfig() (*mysql.Resultset, error) {
 		//"slave"
 		for _, slave := range node.Slave {
 			if slave != nil {
-				idleConns,cacheConns,pushConnCount,popConnCount := slave.ConnCount()
+				idleConns, cacheConns, pushConnCount, popConnCount := slave.ConnCount()
 
 				rows = append(
 					rows,

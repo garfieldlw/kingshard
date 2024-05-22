@@ -163,7 +163,7 @@ func (c *ClientConn) getBackendConn(n *backend.Node, fromSlave bool) (co *backen
 	return
 }
 
-//获取shard的conn，第一个参数表示是不是select
+// 获取shard的conn，第一个参数表示是不是select
 func (c *ClientConn) getShardConns(fromSlave bool, plan *router.Plan) (map[string]*backend.BackendConn, error) {
 	var err error
 	if plan == nil || len(plan.RouteNodeIndexs) == 0 {
@@ -209,7 +209,7 @@ func (c *ClientConn) executeInNode(conn *backend.BackendConn, sql string, args [
 		state = "OK"
 	}
 	execTime := float64(time.Now().UnixNano()-startTime) / float64(time.Millisecond)
-	if strings.ToLower(c.proxy.logSql[c.proxy.logSqlIndex]) != golog.LogSqlOff &&
+	if strings.ToLower(c.proxy.logSql[c.proxy.logSqlIndex]) != golog.LogOff &&
 		execTime >= float64(c.proxy.slowLogTime[c.proxy.slowLogTimeIndex]) {
 		c.proxy.counter.IncrSlowLogTotal()
 		golog.OutputSql(state, "%.1fms - %s->%s:%s",
@@ -264,7 +264,7 @@ func (c *ClientConn) executeInMultiNodes(conns map[string]*backend.BackendConn, 
 				rs[i] = r
 			}
 			execTime := float64(time.Now().UnixNano()-startTime) / float64(time.Millisecond)
-			if c.proxy.logSql[c.proxy.logSqlIndex] != golog.LogSqlOff &&
+			if c.proxy.logSql[c.proxy.logSqlIndex] != golog.LogOff &&
 				execTime >= float64(c.proxy.slowLogTime[c.proxy.slowLogTimeIndex]) {
 				c.proxy.counter.IncrSlowLogTotal()
 				golog.OutputSql(state, "%.1fms - %s->%s:%s",

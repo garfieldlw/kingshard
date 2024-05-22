@@ -94,7 +94,7 @@ func (s *Server) Status() string {
 	return status
 }
 
-//TODO
+// TODO
 func parseAllowIps(allowIpsStr string) ([]IPInfo, error) {
 	if len(allowIpsStr) == 0 {
 		return make([]IPInfo, 0, 10), nil
@@ -109,7 +109,7 @@ func parseAllowIps(allowIpsStr string) ([]IPInfo, error) {
 	return allowIpsList, nil
 }
 
-//parse the blacklist sql file
+// parse the blacklist sql file
 func parseBlackListSqls(blackListFilePath string) (*BlacklistSqls, error) {
 	bs := new(BlacklistSqls)
 	bs.sqls = make(map[string]string)
@@ -119,7 +119,6 @@ func parseBlackListSqls(blackListFilePath string) (*BlacklistSqls, error) {
 			return nil, err
 		}
 
-		defer file.Close()
 		rd := bufio.NewReader(file)
 		for {
 			line, err := rd.ReadString('\n')
@@ -421,7 +420,7 @@ func (s *Server) ChangeProxy(v string) error {
 
 func (s *Server) ChangeLogSql(v string) error {
 	v = strings.ToLower(v)
-	if v != golog.LogSqlOn && v != golog.LogSqlOff {
+	if v != golog.LogOn && v != golog.LogOff {
 		return errors.ErrCmdUnsupport
 	}
 	if s.logSqlIndex == 0 {
@@ -575,7 +574,6 @@ func (s *Server) saveBlackSql() error {
 		)
 		return err
 	}
-	defer f.Close()
 
 	for _, v := range s.blacklistSqls[s.blacklistSqlsIndex].sqls {
 		v = v + "\n"
@@ -843,35 +841,35 @@ func (s *Server) UpdateConfig(newCfg *config.Config) {
 	s.configVer += 1
 }
 
-func (s *Server) GetMonitorData() map[string]map[string]string{
+func (s *Server) GetMonitorData() map[string]map[string]string {
 	data := make(map[string]map[string]string)
 
 	// get all node's monitor data
 	for _, node := range s.nodes {
 		//get master monitor data
 		dbData := make(map[string]string)
-		idleConns,cacheConns,pushConnCount,popConnCount := node.Master.ConnCount()
+		idleConns, cacheConns, pushConnCount, popConnCount := node.Master.ConnCount()
 
-		dbData["idleConn"] 		= strconv.Itoa(idleConns)
-		dbData["cacheConns"] 	= strconv.Itoa(cacheConns)
+		dbData["idleConn"] = strconv.Itoa(idleConns)
+		dbData["cacheConns"] = strconv.Itoa(cacheConns)
 		dbData["pushConnCount"] = strconv.FormatInt(pushConnCount, 10)
-		dbData["popConnCount"] 	= strconv.FormatInt(popConnCount, 10)
-		dbData["maxConn"]	= fmt.Sprintf("%d", node.Cfg.MaxConnNum)
-		dbData["type"] 		= "master"
+		dbData["popConnCount"] = strconv.FormatInt(popConnCount, 10)
+		dbData["maxConn"] = fmt.Sprintf("%d", node.Cfg.MaxConnNum)
+		dbData["type"] = "master"
 
 		data[node.Master.Addr()] = dbData
 
 		//get all slave monitor data
 		for _, slaveNode := range node.Slave {
 			slaveDbData := make(map[string]string)
-			idleConns,cacheConns,pushConnCount,popConnCount := slaveNode.ConnCount()
-			
-			slaveDbData["idleConn"] 		= strconv.Itoa(idleConns)
-			slaveDbData["cacheConns"] 		= strconv.Itoa(cacheConns)
-			slaveDbData["pushConnCount"] 	= strconv.FormatInt(pushConnCount, 10)
-			slaveDbData["popConnCount"] 	= strconv.FormatInt(popConnCount, 10)
-			slaveDbData["maxConn"]	= fmt.Sprintf("%d", node.Cfg.MaxConnNum)
-			slaveDbData["type"] 	= "slave"
+			idleConns, cacheConns, pushConnCount, popConnCount := slaveNode.ConnCount()
+
+			slaveDbData["idleConn"] = strconv.Itoa(idleConns)
+			slaveDbData["cacheConns"] = strconv.Itoa(cacheConns)
+			slaveDbData["pushConnCount"] = strconv.FormatInt(pushConnCount, 10)
+			slaveDbData["popConnCount"] = strconv.FormatInt(popConnCount, 10)
+			slaveDbData["maxConn"] = fmt.Sprintf("%d", node.Cfg.MaxConnNum)
+			slaveDbData["type"] = "slave"
 
 			data[slaveNode.Addr()] = slaveDbData
 		}

@@ -24,7 +24,7 @@ import (
 	"time"
 )
 
-//log level, from low to high, more high means more serious
+// log level, from low to high, more high means more serious
 const (
 	LevelTrace = iota
 	LevelDebug
@@ -43,8 +43,8 @@ const (
 var LevelName [6]string = [6]string{"TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"}
 
 const (
-	LogSqlOn       = "on"
-	LogSqlOff      = "off"
+	LogOn          = "on"
+	LogOff         = "off"
 	TimeFormat     = "2006/01/02 15:04:05"
 	maxBufPoolSize = 16
 )
@@ -67,7 +67,7 @@ type Logger struct {
 	closed bool
 }
 
-//new a logger with specified handler and flag
+// new a logger with specified handler and flag
 func New(handler Handler, flag int) *Logger {
 	var l = new(Logger)
 
@@ -89,7 +89,7 @@ func New(handler Handler, flag int) *Logger {
 	return l
 }
 
-//new a default logger with specified handler and flag: Ltime|Lfile|Llevel
+// new a default logger with specified handler and flag: Ltime|Lfile|Llevel
 func NewDefault(handler Handler) *Logger {
 	return New(handler, Ltime|Lfile|Llevel)
 }
@@ -156,7 +156,7 @@ func (l *Logger) Close() {
 	l.handler.Close()
 }
 
-//set log level, any log level less than it will not log
+// set log level, any log level less than it will not log
 func (l *Logger) SetLevel(level int) {
 	l.level = level
 }
@@ -165,8 +165,8 @@ func (l *Logger) Level() int {
 	return l.level
 }
 
-//a low interface, maybe you can use it for your special log format
-//but it may be not exported later......
+// a low interface, maybe you can use it for your special log format
+// but it may be not exported later......
 func (l *Logger) Output(callDepth int, level int, format string, v ...interface{}) {
 	if l.level > level {
 		return
@@ -229,7 +229,7 @@ func GetLevel() int {
 	return std.level
 }
 
-//全局变量
+// 全局变量
 var GlobalSysLogger *Logger = StdLogger()
 var GlobalSqlLogger *Logger = GlobalSysLogger
 

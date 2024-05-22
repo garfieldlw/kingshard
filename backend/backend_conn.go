@@ -30,7 +30,7 @@ var (
 	pingPeriod = int64(time.Second * 16)
 )
 
-//proxy <-> mysql server
+// proxy <-> mysql server
 type Conn struct {
 	conn net.Conn
 
@@ -48,6 +48,7 @@ type Conn struct {
 	collation mysql.CollationId
 	charset   string
 	salt      []byte
+	plugin    string
 
 	pushTimestamp int64
 	pkgErr        error
@@ -104,7 +105,7 @@ func (c *Conn) ReConnect() error {
 		return err
 	}
 
-	if _, err := c.readOK(); err != nil {
+	if err := c.readAuth(); err != nil {
 		c.conn.Close()
 
 		return err
@@ -200,6 +201,14 @@ func (c *Conn) readInitialHandshake() error {
 		// mysql-proxy also use 12
 		// which is not documented but seems to work.
 		c.salt = append(c.salt, data[pos:pos+12]...)
+
+		pos += 13
+
+		if end := bytes.IndexByte(data[pos:], 0x00); end != -1 {
+			c.plugin = string(data[pos : pos+end])
+		} else {
+			c.plugin = string(data[pos:])
+		}
 	}
 
 	return nil
@@ -208,7 +217,7 @@ func (c *Conn) readInitialHandshake() error {
 func (c *Conn) writeAuthHandshake() error {
 	// Adjust client capability flags based on server support
 	capability := mysql.CLIENT_PROTOCOL_41 | mysql.CLIENT_SECURE_CONNECTION |
-		mysql.CLIENT_LONG_PASSWORD | mysql.CLIENT_TRANSACTIONS | mysql.CLIENT_LONG_FLAG
+		mysql.CLIENT_LONG_PASSWORD | mysql.CLIENT_TRANSACTIONS | mysql.CLIENT_LONG_FLAG | mysql.CLIENT_PLUGIN_AUTH
 
 	capability &= c.capability
 
@@ -223,9 +232,20 @@ func (c *Conn) writeAuthHandshake() error {
 	length += len(c.user) + 1
 
 	//we only support secure connection
-	auth := mysql.CalcPassword(c.salt, []byte(c.password))
+	auth := mysql.CalcPassword(c.plugin, c.salt, c.password)
 
-	length += 1 + len(auth)
+	// encode length of the auth plugin data
+	authLen := len(auth)
+	authLEI := mysql.PutLengthEncodedInt(uint64(authLen))
+	if len(authLEI) > 1 {
+		// if the length can not be written in 1 byte, it must be written as a
+		// length encoded integer
+		capability |= mysql.CLIENT_PLUGIN_AUTH_LENENC_CLIENT_DATA
+	}
+
+	length += len(authLEI) + len(auth)
+
+	length += 21 + 1
 
 	if len(c.db) > 0 {
 		capability |= mysql.CLIENT_CONNECT_WITH_DB
@@ -244,35 +264,44 @@ func (c *Conn) writeAuthHandshake() error {
 	data[7] = byte(capability >> 24)
 
 	//MaxPacketSize [32 bit] (none)
-	//data[8] = 0x00
-	//data[9] = 0x00
-	//data[10] = 0x00
-	//data[11] = 0x00
+	data[8] = 0x00
+	data[9] = 0x00
+	data[10] = 0x00
+	data[11] = 0x00
 
 	//Charset [1 byte]
 	data[12] = byte(c.collation)
 
 	//Filler [23 bytes] (all 0x00)
-	pos := 13 + 23
+	pos := 13
+
+	for ; pos < 13+23; pos++ {
+		data[pos] = 0x00
+	}
 
 	//User [null terminated string]
 	if len(c.user) > 0 {
 		pos += copy(data[pos:], c.user)
 	}
-	//data[pos] = 0x00
+	data[pos] = 0x00
 	pos++
 
 	// auth [length encoded integer]
-	data[pos] = byte(len(auth))
-	pos += 1 + copy(data[pos+1:], auth)
+	pos += copy(data[pos:], authLEI)
+	pos += copy(data[pos:], auth)
 
 	// db [null terminated string]
 	if len(c.db) > 0 {
 		pos += copy(data[pos:], c.db)
-		//data[pos] = 0x00
+		data[pos] = 0x00
+		pos++
 	}
 
-	return c.writePacket(data)
+	pos += copy(data[pos:], c.plugin)
+	data[pos] = 0x00
+	pos++
+
+	return c.writePacket(data[:pos])
 }
 
 func (c *Conn) writeCommand(command byte) error {
@@ -682,6 +711,47 @@ func (c *Conn) handleErrorPacket(data []byte) error {
 	e.Message = string(data[pos:])
 
 	return e
+}
+
+func (c *Conn) readAuth() error {
+	data, err := c.readPacket()
+	if err != nil {
+		return err
+	}
+
+	if data[0] == mysql.OK_HEADER {
+		_, err = c.readOK()
+		return err
+	} else if data[0] == mysql.AUTHMORE_HEADER {
+		switch c.plugin {
+		case "caching_sha2_password":
+			switch len(data[1:]) {
+			case 0:
+				return nil // auth successful
+			case 1:
+				switch data[1:][0] {
+				case mysql.SERVER_CACHING_SHA2_PASSWORD_FAST_AUTH_SUCCESS:
+					_, err = c.readOK()
+					return err // auth successful
+				default:
+					return mysql.ErrMalformPacket
+				}
+			default:
+				return mysql.ErrMalformPacket
+			}
+		case "sha256_password":
+			switch len(data[1:]) {
+			case 0:
+				return nil // auth successful
+			default:
+				return mysql.ErrMalformPacket
+			}
+		default:
+			return mysql.ErrMalformPacket
+		}
+	} else {
+		return c.handleErrorPacket(data)
+	}
 }
 
 func (c *Conn) readOK() (*mysql.Result, error) {

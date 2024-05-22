@@ -8,16 +8,16 @@ prometheus_addr : 0.0.0.0:7080
 user_list:
 -
     user :  root
-    password : root
+    password : 123456
 -
     user :  kingshard
-    password : kingshard
+    password : 123456
 
 # the web api server
 web_addr : 0.0.0.0:9797
 #HTTP Basic Auth
 web_user : admin
-web_password : admin
+web_password : 123456
 
 # if set log_path, the sql log will write into log_path/sql.log,the system log
 # will write into log_path/sys.log
@@ -54,7 +54,7 @@ nodes :
 
     # all mysql in a node must have the same user and password
     user :  root 
-    password : root
+    password : 123456
 
     # master represents a real mysql master server 
     master : 127.0.0.1:3306
@@ -71,10 +71,10 @@ nodes :
 
     # all mysql in a node must have the same user and password
     user :  root 
-    password : root
+    password : 123456
 
     # master represents a real mysql master server 
-    master : 127.0.0.1:3309
+    master : 127.0.0.1:3307
 
     # slave represents a real mysql salve server 
     slave : 
