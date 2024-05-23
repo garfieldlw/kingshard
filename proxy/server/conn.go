@@ -286,7 +286,6 @@ func (c *ClientConn) Run() {
 		if c.configVer != c.proxy.configVer {
 			err := c.reloadConfig()
 			if nil != err {
-				fmt.Println(1)
 				golog.Error("ClientConn", "Run", err.Error(), c.connectionId)
 				c.writeError(err)
 				return
@@ -297,7 +296,6 @@ func (c *ClientConn) Run() {
 
 		if err := c.dispatch(data); err != nil {
 			c.proxy.counter.IncrErrLogTotal()
-			fmt.Println(2)
 			golog.Error("ClientConn", "Run", err.Error(), c.connectionId)
 			c.writeError(err)
 			if err == mysql.ErrBadConn {

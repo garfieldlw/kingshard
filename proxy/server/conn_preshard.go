@@ -42,7 +42,7 @@ func (c *ClientConn) isBlacklistSql(sql string) bool {
 	return false
 }
 
-//preprocessing sql before parse sql
+// preprocessing sql before parse sql
 func (c *ClientConn) preHandleShard(sql string) (bool, error) {
 	var rs []*mysql.Result
 	var err error
@@ -54,18 +54,13 @@ func (c *ClientConn) preHandleShard(sql string) (bool, error) {
 	//filter the blacklist sql
 	if c.proxy.blacklistSqls[c.proxy.blacklistSqlsIndex].sqlsLen != 0 {
 		if c.isBlacklistSql(sql) {
-			golog.OutputSql("Forbidden", "%s->%s:%s",
-				c.c.RemoteAddr(),
-				c.proxy.addr,
-				sql,
-			)
+			golog.OutputSql("Forbidden", "%s->%s:%s", c.c.RemoteAddr(), c.proxy.addr, sql)
 			err := mysql.NewError(mysql.ER_UNKNOWN_ERROR, "sql in blacklist.")
 			return false, err
 		}
 	}
 
 	tokens := strings.FieldsFunc(sql, hack.IsSqlSep)
-
 	if len(tokens) == 0 {
 		return false, errors.ErrCmdUnsupport
 	}
@@ -159,7 +154,7 @@ func (c *ClientConn) GetTransExecDB(tokens []string, sql string) (*ExecuteDB, er
 	return executeDB, nil
 }
 
-//if sql need shard return nil, else return the unshard db
+// if sql need shard return nil, else return the unshard db
 func (c *ClientConn) GetExecDB(tokens []string, sql string) (*ExecuteDB, error) {
 	tokensLen := len(tokens)
 	if 0 < tokensLen {
@@ -220,7 +215,7 @@ func (c *ClientConn) setExecuteNode(tokens []string, tokensLen int, executeDB *E
 	return nil
 }
 
-//get the execute database for select sql
+// get the execute database for select sql
 func (c *ClientConn) getSelectExecDB(sql string, tokens []string, tokensLen int) (*ExecuteDB, error) {
 	var ruleDB string
 	executeDB := new(ExecuteDB)
@@ -271,7 +266,7 @@ func (c *ClientConn) getSelectExecDB(sql string, tokens []string, tokensLen int)
 	return executeDB, nil
 }
 
-//get the execute database for delete sql
+// get the execute database for delete sql
 func (c *ClientConn) getDeleteExecDB(sql string, tokens []string, tokensLen int) (*ExecuteDB, error) {
 	var ruleDB string
 	executeDB := new(ExecuteDB)
@@ -309,7 +304,7 @@ func (c *ClientConn) getDeleteExecDB(sql string, tokens []string, tokensLen int)
 	return executeDB, nil
 }
 
-//get the execute database for insert or replace sql
+// get the execute database for insert or replace sql
 func (c *ClientConn) getInsertOrReplaceExecDB(sql string, tokens []string, tokensLen int) (*ExecuteDB, error) {
 	var ruleDB string
 	executeDB := new(ExecuteDB)
@@ -347,7 +342,7 @@ func (c *ClientConn) getInsertOrReplaceExecDB(sql string, tokens []string, token
 	return executeDB, nil
 }
 
-//get the execute database for update sql
+// get the execute database for update sql
 func (c *ClientConn) getUpdateExecDB(sql string, tokens []string, tokensLen int) (*ExecuteDB, error) {
 	var ruleDB string
 	executeDB := new(ExecuteDB)
@@ -383,7 +378,7 @@ func (c *ClientConn) getUpdateExecDB(sql string, tokens []string, tokensLen int)
 	return executeDB, nil
 }
 
-//get the execute database for set sql
+// get the execute database for set sql
 func (c *ClientConn) getSetExecDB(sql string, tokens []string, tokensLen int) (*ExecuteDB, error) {
 	executeDB := new(ExecuteDB)
 	executeDB.sql = sql
@@ -419,9 +414,9 @@ func (c *ClientConn) getSetExecDB(sql string, tokens []string, tokensLen int) (*
 	return executeDB, nil
 }
 
-//get the execute database for show sql
-//choose slave preferentially
-//tokens[0] is show
+// get the execute database for show sql
+// choose slave preferentially
+// tokens[0] is show
 func (c *ClientConn) getShowExecDB(sql string, tokens []string, tokensLen int) (*ExecuteDB, error) {
 	executeDB := new(ExecuteDB)
 	executeDB.IsSlave = true
@@ -441,7 +436,7 @@ func (c *ClientConn) getShowExecDB(sql string, tokens []string, tokensLen int) (
 	return executeDB, nil
 }
 
-//handle show columns/fields
+// handle show columns/fields
 func (c *ClientConn) handleShowColumns(sql string, tokens []string,
 	tokensLen int, executeDB *ExecuteDB) error {
 	var ruleDB string
@@ -487,8 +482,8 @@ func (c *ClientConn) handleShowColumns(sql string, tokens []string,
 	return nil
 }
 
-//get the execute database for truncate sql
-//sql: TRUNCATE [TABLE] tbl_name
+// get the execute database for truncate sql
+// sql: TRUNCATE [TABLE] tbl_name
 func (c *ClientConn) getTruncateExecDB(sql string, tokens []string, tokensLen int) (*ExecuteDB, error) {
 	var ruleDB string
 	executeDB := new(ExecuteDB)

@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"github.com/flike/kingshard/core/unique"
 	"hash/crc32"
 	"strconv"
 	"time"
@@ -163,7 +164,7 @@ func (s *NumRangeShard) EqualStop(key interface{}, index int) bool {
 type DateYearShard struct {
 }
 
-//the format of date is: YYYY-MM-DD HH:MM:SS,YYYY-MM-DD or unix timestamp(int)
+// the format of date is: YYYY-MM-DD HH:MM:SS,YYYY-MM-DD or unix timestamp(int)
 func (s *DateYearShard) FindForKey(key interface{}) (int, error) {
 	switch val := key.(type) {
 	case int:
@@ -188,7 +189,7 @@ func (s *DateYearShard) FindForKey(key interface{}) (int, error) {
 type DateMonthShard struct {
 }
 
-//the format of date is: YYYY-MM-DD HH:MM:SS,YYYY-MM-DD or unix timestamp(int)
+// the format of date is: YYYY-MM-DD HH:MM:SS,YYYY-MM-DD or unix timestamp(int)
 func (s *DateMonthShard) FindForKey(key interface{}) (int, error) {
 	timeFormat := "2006-01-02"
 	switch val := key.(type) {
@@ -236,7 +237,7 @@ func (s *DateMonthShard) FindForKey(key interface{}) (int, error) {
 type DateDayShard struct {
 }
 
-//the format of date is: YYYY-MM-DD HH:MM:SS,YYYY-MM-DD or unix timestamp(int)
+// the format of date is: YYYY-MM-DD HH:MM:SS,YYYY-MM-DD or unix timestamp(int)
 func (s *DateDayShard) FindForKey(key interface{}) (int, error) {
 	timeFormat := "2006-01-02"
 	switch val := key.(type) {
@@ -279,6 +280,111 @@ func (s *DateDayShard) FindForKey(key interface{}) (int, error) {
 		}
 	}
 	panic(NewKeyError("Unexpected key variable type %T", key))
+}
+
+type DateYearByIdShard struct {
+}
+
+func (s *DateYearByIdShard) FindForKey(key interface{}) (int, error) {
+	var id int64
+	switch val := key.(type) {
+	case uint64:
+		id = int64(val)
+	case int64:
+		id = val
+	case string:
+		if v, err := strconv.ParseInt(val, 10, 64); err != nil {
+			panic(NewKeyError("invalid num format %v", v))
+		} else {
+			id = v
+		}
+	default:
+		panic(NewKeyError("Unexpected key variable type %T", key))
+	}
+
+	un, err := unique.New(0)
+	if err != nil {
+		panic(NewKeyError("invalid unique service"))
+	}
+
+	tm := time.Unix(un.GetTimestamp(id), 0)
+	return tm.Year(), nil
+}
+
+type DateMonthByIdShard struct {
+}
+
+func (s *DateMonthByIdShard) FindForKey(key interface{}) (int, error) {
+	var id int64
+	switch val := key.(type) {
+	case uint64:
+		id = int64(val)
+	case int64:
+		id = val
+	case string:
+		if v, err := strconv.ParseInt(val, 10, 64); err != nil {
+			panic(NewKeyError("invalid num format %v", v))
+		} else {
+			id = v
+		}
+	default:
+		panic(NewKeyError("Unexpected key variable type %T", key))
+	}
+
+	un, err := unique.New(0)
+	if err != nil {
+		panic(NewKeyError("invalid unique service"))
+	}
+
+	timeFormat := "2006-01-02"
+
+	tm := time.Unix(un.GetTimestamp(id), 0)
+	dateStr := tm.Format(timeFormat)
+	str := dateStr[:4] + dateStr[5:7]
+	yearMonth, err := strconv.Atoi(str)
+	if err != nil {
+		return 0, err
+	}
+
+	return yearMonth, nil
+}
+
+type DateDayByIdShard struct {
+}
+
+func (s *DateDayByIdShard) FindForKey(key interface{}) (int, error) {
+	var id int64
+	switch val := key.(type) {
+	case uint64:
+		id = int64(val)
+	case int64:
+		id = val
+	case string:
+		if v, err := strconv.ParseInt(val, 10, 64); err != nil {
+			panic(NewKeyError("invalid num format %v", v))
+		} else {
+			id = v
+		}
+	default:
+		panic(NewKeyError("Unexpected key variable type %T", key))
+	}
+
+	un, err := unique.New(0)
+	if err != nil {
+		panic(NewKeyError("invalid unique service"))
+	}
+
+	timeFormat := "2006-01-02"
+
+	tm := time.Unix(un.GetTimestamp(id), 0)
+	dateStr := tm.Format(timeFormat)
+	str := dateStr[:4] + dateStr[5:7] + dateStr[8:10]
+	yearMonth, err := strconv.Atoi(str)
+	if err != nil {
+		return 0, err
+	}
+
+	return yearMonth, nil
 }
 
 type DefaultShard struct {
