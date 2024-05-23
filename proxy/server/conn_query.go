@@ -41,9 +41,7 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 				buf := make([]byte, size)
 				buf = buf[:runtime.Stack(buf, false)]
 
-				golog.Error("ClientConn", "handleQuery",
-					err.Error(), 0,
-					"stack", string(buf), "sql", sql)
+				golog.Error("ClientConn", "handleQuery", err.Error(), 0, "stack", string(buf), "sql", sql)
 			}
 
 			err = errors.ErrInternalServer
@@ -54,10 +52,7 @@ func (c *ClientConn) handleQuery(sql string) (err error) {
 	sql = strings.TrimRight(sql, ";") //删除sql语句最后的分号
 	hasHandled, err := c.preHandleShard(sql)
 	if err != nil {
-		golog.Error("server", "preHandleShard", err.Error(), 0,
-			"sql", sql,
-			"hasHandled", hasHandled,
-		)
+		golog.Error("server", "preHandleShard", err.Error(), 0, "sql", sql, "hasHandled", hasHandled)
 		return err
 	}
 	if hasHandled {
@@ -212,12 +207,7 @@ func (c *ClientConn) executeInNode(conn *backend.BackendConn, sql string, args [
 	if strings.ToLower(c.proxy.logSql[c.proxy.logSqlIndex]) != golog.LogOff &&
 		execTime >= float64(c.proxy.slowLogTime[c.proxy.slowLogTimeIndex]) {
 		c.proxy.counter.IncrSlowLogTotal()
-		golog.OutputSql(state, "%.1fms - %s->%s:%s",
-			execTime,
-			c.c.RemoteAddr(),
-			conn.GetAddr(),
-			sql,
-		)
+		golog.OutputSql(state, "%.1fms - %s->%s:%s", execTime, c.c.RemoteAddr(), conn.GetAddr(), sql)
 	}
 
 	if err != nil {
@@ -229,10 +219,7 @@ func (c *ClientConn) executeInNode(conn *backend.BackendConn, sql string, args [
 
 func (c *ClientConn) executeInMultiNodes(conns map[string]*backend.BackendConn, sqls map[string][]string, args []interface{}) ([]*mysql.Result, error) {
 	if len(conns) != len(sqls) {
-		golog.Error("ClientConn", "executeInMultiNodes", errors.ErrConnNotEqual.Error(), c.connectionId,
-			"conns", conns,
-			"sqls", sqls,
-		)
+		golog.Error("ClientConn", "executeInMultiNodes", errors.ErrConnNotEqual.Error(), c.connectionId, "conns", conns, "sqls", sqls)
 		return nil, errors.ErrConnNotEqual
 	}
 
@@ -267,12 +254,7 @@ func (c *ClientConn) executeInMultiNodes(conns map[string]*backend.BackendConn, 
 			if c.proxy.logSql[c.proxy.logSqlIndex] != golog.LogOff &&
 				execTime >= float64(c.proxy.slowLogTime[c.proxy.slowLogTimeIndex]) {
 				c.proxy.counter.IncrSlowLogTotal()
-				golog.OutputSql(state, "%.1fms - %s->%s:%s",
-					execTime,
-					c.c.RemoteAddr(),
-					co.GetAddr(),
-					v,
-				)
+				golog.OutputSql(state, "%.1fms - %s->%s:%s", execTime, c.c.RemoteAddr(), co.GetAddr(), v)
 			}
 			i++
 		}

@@ -720,11 +720,10 @@ func (c *Conn) readAuth() error {
 	}
 
 	if data[0] == mysql.OK_HEADER {
-		_, err = c.readOK()
-		return err
+		return nil
 	} else if data[0] == mysql.AUTHMORE_HEADER {
 		switch c.plugin {
-		case "caching_sha2_password":
+		case mysql.AUTH_PLUGIN_CACHING_SHA2_PASSWORD:
 			switch len(data[1:]) {
 			case 0:
 				return nil // auth successful
@@ -736,13 +735,6 @@ func (c *Conn) readAuth() error {
 				default:
 					return mysql.ErrMalformPacket
 				}
-			default:
-				return mysql.ErrMalformPacket
-			}
-		case "sha256_password":
-			switch len(data[1:]) {
-			case 0:
-				return nil // auth successful
 			default:
 				return mysql.ErrMalformPacket
 			}

@@ -77,7 +77,7 @@ nodes :
     master : 127.0.0.1:3307
 
     # slave represents a real mysql salve server 
-    slave : 
+    #slave :
 
     # down mysql after N seconds noalive
     # 0 will no down

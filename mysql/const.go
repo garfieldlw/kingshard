@@ -18,7 +18,7 @@ const (
 	MinProtocolVersion byte   = 10
 	MaxPayloadLen      int    = 1<<24 - 1
 	TimeFormat         string = "2006-01-02 15:04:05"
-	ServerVersion      string = "5.6.20-kingshard"
+	ServerVersion      string = "5.7.0-kingshard"
 )
 
 const (
@@ -161,7 +161,8 @@ const (
 )
 
 const (
-	AUTH_NAME = "mysql_native_password"
+	AUTH_PLUGIN_NATIVE_PASSWORD       = "mysql_native_password"
+	AUTH_PLUGIN_CACHING_SHA2_PASSWORD = "caching_sha2_password"
 )
 
 var (

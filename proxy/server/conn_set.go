@@ -56,6 +56,7 @@ func (c *ClientConn) handleSet(stmt *sqlparser.Set, sql string) (err error) {
 	}()
 
 	k := string(stmt.Exprs[0].Name.Name)
+
 	switch strings.ToUpper(k) {
 	case `AUTOCOMMIT`, `@@AUTOCOMMIT`, `@@SESSION.AUTOCOMMIT`:
 		return c.handleSetAutoCommit(stmt.Exprs[0].Expr)

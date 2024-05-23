@@ -70,9 +70,9 @@ func main() {
 
 	//when the log file size greater than 1GB, kingshard will generate a new file
 	if len(cfg.Log) != 0 && cfg.Log == golog.LogOn {
-		//golog.GlobalSysLogger = golog.New(sysFile, golog.Lfile|golog.Ltime|golog.Llevel)
+		golog.GlobalSysLogger = golog.New(golog.Ltime | golog.Llevel)
 
-		//golog.GlobalSqlLogger = golog.New(sqlFile, golog.Lfile|golog.Ltime|golog.Llevel)
+		golog.GlobalSqlLogger = golog.New(golog.Ltime | golog.Llevel)
 	}
 
 	if *logLevel != "" {
@@ -87,23 +87,17 @@ func main() {
 	svr, err = server.NewServer(cfg)
 	if err != nil {
 		golog.Error("main", "main", err.Error(), 0)
-		golog.GlobalSysLogger.Close()
-		golog.GlobalSqlLogger.Close()
 		return
 	}
 	apiSvr, err = web.NewApiServer(cfg, svr)
 	if err != nil {
 		golog.Error("main", "main", err.Error(), 0)
-		golog.GlobalSysLogger.Close()
-		golog.GlobalSqlLogger.Close()
 		svr.Close()
 		return
 	}
 	prometheusSvr, err = monitor.NewPrometheus(cfg.PrometheusAddr, svr)
 	if err != nil {
 		golog.Error("main", "main", err.Error(), 0)
-		golog.GlobalSysLogger.Close()
-		golog.GlobalSqlLogger.Close()
 		svr.Close()
 		return
 	}
@@ -122,8 +116,6 @@ func main() {
 			sig := <-sc
 			if sig == syscall.SIGINT || sig == syscall.SIGTERM || sig == syscall.SIGQUIT {
 				golog.Info("main", "main", "Got signal", 0, "signal", sig)
-				golog.GlobalSysLogger.Close()
-				golog.GlobalSqlLogger.Close()
 				svr.Close()
 			} else if sig == syscall.SIGPIPE {
 				golog.Info("main", "main", "Ignore broken pipe signal", 0)
@@ -138,8 +130,10 @@ func main() {
 			}
 		}
 	}()
+
 	go apiSvr.Run()
 	go prometheusSvr.Run()
+
 	svr.Run()
 }
 

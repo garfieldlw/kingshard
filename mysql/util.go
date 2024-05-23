@@ -38,11 +38,11 @@ func CalcPassword(plugin string, scramble []byte, password string) []byte {
 	}
 
 	switch plugin {
-	case "caching_sha2_password":
+	case AUTH_PLUGIN_CACHING_SHA2_PASSWORD:
 		authResp := scrambleSHA256Password(scramble, password)
 		return authResp
 
-	case "mysql_native_password":
+	case AUTH_PLUGIN_NATIVE_PASSWORD:
 		// https://dev.mysql.com/doc/internals/en/secure-password-authentication.html
 		// Native password authentication only need and will need 20-byte challenge.
 		authResp := scramblePassword(scramble[:20], password)

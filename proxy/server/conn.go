@@ -71,7 +71,7 @@ type ClientConn struct {
 
 var DEFAULT_CAPABILITY uint32 = mysql.CLIENT_LONG_PASSWORD | mysql.CLIENT_LONG_FLAG |
 	mysql.CLIENT_CONNECT_WITH_DB | mysql.CLIENT_PROTOCOL_41 |
-	mysql.CLIENT_TRANSACTIONS | mysql.CLIENT_SECURE_CONNECTION
+	mysql.CLIENT_TRANSACTIONS | mysql.CLIENT_SECURE_CONNECTION | mysql.CLIENT_PLUGIN_AUTH
 
 var baseConnId uint32 = 10000
 
@@ -93,29 +93,23 @@ func (c *ClientConn) IsAllowConnect() bool {
 		}
 	}
 
-	golog.Error("server", "IsAllowConnect", "error", mysql.ER_ACCESS_DENIED_ERROR,
-		"ip address", c.c.RemoteAddr().String(), " access denied by kindshard.")
+	golog.Error("server", "IsAllowConnect", "error", mysql.ER_ACCESS_DENIED_ERROR, "ip address", c.c.RemoteAddr().String(), " access denied by kindshard.")
 	return false
 }
 
 func (c *ClientConn) Handshake() error {
 	if err := c.writeInitialHandshake(); err != nil {
-		golog.Error("server", "Handshake", err.Error(),
-			c.connectionId, "msg", "send initial handshake error")
+		golog.Error("server", "Handshake", err.Error(), c.connectionId, "msg", "send initial handshake error")
 		return err
 	}
 
 	if err := c.readHandshakeResponse(); err != nil {
-		golog.Error("server", "readHandshakeResponse",
-			err.Error(), c.connectionId,
-			"msg", "read Handshake Response error")
+		golog.Error("server", "readHandshakeResponse", err.Error(), c.connectionId, "msg", "read Handshake Response error")
 		return err
 	}
 
 	if err := c.writeOK(nil); err != nil {
-		golog.Error("server", "readHandshakeResponse",
-			"write ok fail",
-			c.connectionId, "error", err.Error())
+		golog.Error("server", "readHandshakeResponse", "write ok fail", c.connectionId, "error", err.Error())
 		return err
 	}
 
@@ -139,7 +133,7 @@ func (c *ClientConn) writeInitialHandshake() error {
 	data := make([]byte, 4, 128)
 
 	//min version 10
-	data = append(data, 10)
+	data = append(data, mysql.MinProtocolVersion)
 
 	//server version[00]
 	data = append(data, mysql.ServerVersion...)
@@ -177,6 +171,9 @@ func (c *ClientConn) writeInitialHandshake() error {
 	data = append(data, c.salt[8:]...)
 
 	//filter [00]
+	data = append(data, 0)
+
+	data = append(data, c.plugin...)
 	data = append(data, 0)
 
 	return c.writePacket(data)
@@ -229,23 +226,14 @@ func (c *ClientConn) readHandshakeResponse() error {
 
 	//check user
 	if _, ok := c.proxy.users[c.user]; !ok {
-		golog.Error("ClientConn", "readHandshakeResponse", "error", 0,
-			"auth", auth,
-			"client_user", c.user,
-			"config_set_user", c.user,
-			"password", c.proxy.users[c.user])
+		golog.Error("ClientConn", "readHandshakeResponse", "error", 0, "auth", auth, "client_user", c.user, "config_set_user", c.user, "password", c.proxy.users[c.user])
 		return mysql.NewDefaultError(mysql.ER_ACCESS_DENIED_ERROR, c.user, c.c.RemoteAddr().String(), "Yes")
 	}
 
 	//check password
 	checkAuth := mysql.CalcPassword(c.plugin, c.salt, c.proxy.users[c.user])
 	if !bytes.Equal(auth, checkAuth) {
-		golog.Error("ClientConn", "readHandshakeResponse", "error", 0,
-			"auth", auth,
-			"checkAuth", checkAuth,
-			"client_user", c.user,
-			"config_set_user", c.user,
-			"password", c.proxy.users[c.user])
+		golog.Error("ClientConn", "readHandshakeResponse", "error", 0, "auth", auth, "checkAuth", checkAuth, "client_user", c.user, "config_set_user", c.user, "password", c.proxy.users[c.user])
 		return mysql.NewDefaultError(mysql.ER_ACCESS_DENIED_ERROR, c.user, c.c.RemoteAddr().String(), "Yes")
 	}
 
@@ -282,9 +270,7 @@ func (c *ClientConn) Run() {
 			buf := make([]byte, size)
 			buf = buf[:runtime.Stack(buf, false)]
 
-			golog.Error("ClientConn", "Run",
-				err.Error(), 0,
-				"stack", string(buf))
+			golog.Error("ClientConn", "Run", err.Error(), 0, "stack", string(buf))
 		}
 
 		c.Close()
@@ -300,23 +286,19 @@ func (c *ClientConn) Run() {
 		if c.configVer != c.proxy.configVer {
 			err := c.reloadConfig()
 			if nil != err {
-				golog.Error("ClientConn", "Run",
-					err.Error(), c.connectionId,
-				)
+				fmt.Println(1)
+				golog.Error("ClientConn", "Run", err.Error(), c.connectionId)
 				c.writeError(err)
 				return
 			}
 			c.configVer = c.proxy.configVer
-			golog.Debug("ClientConn", "Run",
-				fmt.Sprintf("config reload ok, ver:%d", c.configVer), c.connectionId,
-			)
+			golog.Debug("ClientConn", "Run", fmt.Sprintf("config reload ok, ver:%d", c.configVer), c.connectionId)
 		}
 
 		if err := c.dispatch(data); err != nil {
 			c.proxy.counter.IncrErrLogTotal()
-			golog.Error("ClientConn", "Run",
-				err.Error(), c.connectionId,
-			)
+			fmt.Println(2)
+			golog.Error("ClientConn", "Run", err.Error(), c.connectionId)
 			c.writeError(err)
 			if err == mysql.ErrBadConn {
 				c.Close()

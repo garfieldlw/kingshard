@@ -153,10 +153,12 @@ func parseNode(cfg config.NodeConfig) (*backend.Node, error) {
 	n.Cfg = cfg
 
 	n.DownAfterNoAlive = time.Duration(cfg.DownAfterNoAlive) * time.Second
+
 	err = n.ParseMaster(cfg.Master)
 	if err != nil {
 		return nil, err
 	}
+
 	err = n.ParseSlave(cfg.Slave)
 	if err != nil {
 		return nil, err
@@ -227,10 +229,12 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	s.cfg = cfg
 	s.counter = new(Counter)
 	s.addr = cfg.Addr
+
 	s.users = make(map[string]string)
 	for _, user := range cfg.UserList {
 		s.users[user.User] = user.Password
 	}
+
 	atomic.StoreInt32(&s.statusIndex, 0)
 	s.status[s.statusIndex] = Online
 	atomic.StoreInt32(&s.logSqlIndex, 0)
@@ -246,6 +250,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	if !ok {
 		return nil, errors.ErrInvalidCharset
 	}
+
 	//change the default charset
 	mysql.DEFAULT_CHARSET = cfg.Charset
 	mysql.DEFAULT_COLLATION_ID = cid
@@ -341,6 +346,7 @@ func (s *Server) newClientConn(co net.Conn) *ClientConn {
 	c.status = mysql.SERVER_STATUS_AUTOCOMMIT
 
 	c.salt, _ = mysql.RandomBuf(20)
+	c.plugin = mysql.AUTH_PLUGIN_NATIVE_PASSWORD
 
 	c.txConns = make(map[*backend.Node]*backend.BackendConn)
 
