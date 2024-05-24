@@ -49,7 +49,7 @@ func (c *ClientConn) preHandleShard(sql string) (bool, error) {
 	var executeDB *ExecuteDB
 
 	if len(sql) == 0 {
-		return false, errors.ErrCmdUnsupport
+		return false, errors.ErrCmdUnsupported
 	}
 	//filter the blacklist sql
 	if c.proxy.blacklistSqls[c.proxy.blacklistSqlsIndex].sqlsLen != 0 {
@@ -62,7 +62,7 @@ func (c *ClientConn) preHandleShard(sql string) (bool, error) {
 
 	tokens := strings.FieldsFunc(sql, hack.IsSqlSep)
 	if len(tokens) == 0 {
-		return false, errors.ErrCmdUnsupport
+		return false, errors.ErrCmdUnsupported
 	}
 
 	if c.isInTransaction() {

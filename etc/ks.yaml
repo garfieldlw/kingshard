@@ -40,6 +40,9 @@ log_sql: on
 # support ip and ip segment
 #allow_ips : 127.0.0.1,192.168.15.0/24
 
+# proxy_mysql_version(5.7|8.4) is the version of mysql that proxy supported.
+#proxy_mysql_version: 5.7
+
 # the charset of kingshard, if you don't set this item
 # the default charset of kingshard is utf8.
 #proxy_charset: gbk

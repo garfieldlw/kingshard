@@ -33,14 +33,16 @@ type Config struct {
 	WebUser     string `yaml:"web_user"`
 	WebPassword string `yaml:"web_password"`
 
-	Log         string       `yaml:"log"`
-	LogLevel    string       `yaml:"log_level"`
-	LogSql      string       `yaml:"log_sql"`
-	SlowLogTime int          `yaml:"slow_log_time"`
-	AllowIps    string       `yaml:"allow_ips"`
-	BlsFile     string       `yaml:"blacklist_sql_file"`
-	Charset     string       `yaml:"proxy_charset"`
-	Nodes       []NodeConfig `yaml:"nodes"`
+	Log         string `yaml:"log"`
+	LogLevel    string `yaml:"log_level"`
+	LogSql      string `yaml:"log_sql"`
+	SlowLogTime int    `yaml:"slow_log_time"`
+	AllowIps    string `yaml:"allow_ips"`
+	BlsFile     string `yaml:"blacklist_sql_file"`
+
+	MysqlVersion string       `yaml:"proxy_mysql_version"`
+	Charset      string       `yaml:"proxy_charset"`
+	Nodes        []NodeConfig `yaml:"nodes"`
 
 	SchemaList []SchemaConfig `yaml:"schema_list"`
 }

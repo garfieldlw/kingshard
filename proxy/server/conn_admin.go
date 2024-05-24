@@ -67,12 +67,12 @@ func (c *ClientConn) handleNodeCmd(rows sqlparser.InsertRows) error {
 
 	vals := rows.(sqlparser.Values)
 	if len(vals) == 0 {
-		return errors.ErrCmdUnsupport
+		return errors.ErrCmdUnsupported
 	}
 
 	tuple := vals[0].(sqlparser.ValTuple)
 	if len(tuple) != len(cmdNodeOrder) {
-		return errors.ErrCmdUnsupport
+		return errors.ErrCmdUnsupported
 	}
 
 	opt = sqlparser.String(tuple[0])
@@ -114,7 +114,7 @@ func (c *ClientConn) handleNodeCmd(rows sqlparser.InsertRows) error {
 			addr,
 		)
 	default:
-		err = errors.ErrCmdUnsupport
+		err = errors.ErrCmdUnsupported
 		golog.Error("ClientConn", "handleNodeCmd", err.Error(),
 			c.connectionId, "opt", opt)
 	}
@@ -128,12 +128,12 @@ func (c *ClientConn) handleServerCmd(rows sqlparser.InsertRows) (*mysql.Resultse
 
 	vals := rows.(sqlparser.Values)
 	if len(vals) == 0 {
-		return nil, errors.ErrCmdUnsupport
+		return nil, errors.ErrCmdUnsupported
 	}
 
 	tuple := vals[0].(sqlparser.ValTuple)
 	if len(tuple) != len(cmdServerOrder) {
-		return nil, errors.ErrCmdUnsupport
+		return nil, errors.ErrCmdUnsupported
 	}
 
 	opt = sqlparser.String(tuple[0])
@@ -157,7 +157,7 @@ func (c *ClientConn) handleServerCmd(rows sqlparser.InsertRows) (*mysql.Resultse
 	case ADMIN_SAVE_CONFIG:
 		err = c.handleAdminSave(k, v)
 	default:
-		err = errors.ErrCmdUnsupport
+		err = errors.ErrCmdUnsupported
 		golog.Error("ClientConn", "handleNodeCmd", err.Error(),
 			c.connectionId, "opt", opt)
 	}
@@ -171,7 +171,7 @@ func (c *ClientConn) handleServerCmd(rows sqlparser.InsertRows) (*mysql.Resultse
 func (c *ClientConn) AddDatabase(nodeName string, role string, addr string) error {
 	//can not add a new master database
 	if role != Slave {
-		return errors.ErrCmdUnsupport
+		return errors.ErrCmdUnsupported
 	}
 
 	return c.proxy.AddSlave(nodeName, addr)
@@ -180,7 +180,7 @@ func (c *ClientConn) AddDatabase(nodeName string, role string, addr string) erro
 func (c *ClientConn) DeleteDatabase(nodeName string, role string, addr string) error {
 	//can not delete a master database
 	if role != Slave {
-		return errors.ErrCmdUnsupport
+		return errors.ErrCmdUnsupported
 	}
 
 	return c.proxy.DeleteSlave(nodeName, addr)
@@ -188,7 +188,7 @@ func (c *ClientConn) DeleteDatabase(nodeName string, role string, addr string) e
 
 func (c *ClientConn) UpDatabase(nodeName string, role string, addr string) error {
 	if role != Master && role != Slave {
-		return errors.ErrCmdUnsupport
+		return errors.ErrCmdUnsupported
 	}
 	if role == Master {
 		return c.proxy.UpMaster(nodeName, addr)
@@ -199,7 +199,7 @@ func (c *ClientConn) UpDatabase(nodeName string, role string, addr string) error
 
 func (c *ClientConn) DownDatabase(nodeName string, role string, addr string) error {
 	if role != Master && role != Slave {
-		return errors.ErrCmdUnsupport
+		return errors.ErrCmdUnsupported
 	}
 	if role == Master {
 		return c.proxy.DownMaster(nodeName, addr)
@@ -218,13 +218,13 @@ func (c *ClientConn) checkCmdOrder(region string, columns sqlparser.Columns) err
 	case ServerRegion:
 		cmdOrder = cmdServerOrder
 	default:
-		return errors.ErrCmdUnsupport
+		return errors.ErrCmdUnsupported
 	}
 
 	for i := 0; i < len(node); i++ {
 		val := sqlparser.String(node[i])
 		if val != cmdOrder[i] {
-			return errors.ErrCmdUnsupport
+			return errors.ErrCmdUnsupported
 		}
 	}
 
@@ -323,7 +323,7 @@ func (c *ClientConn) handleAdmin(admin *sqlparser.Admin) error {
 
 func (c *ClientConn) handleAdminShow(k, v string) (*mysql.Resultset, error) {
 	if len(k) == 0 || len(v) == 0 {
-		return nil, errors.ErrCmdUnsupport
+		return nil, errors.ErrCmdUnsupported
 	}
 	if k == ADMIN_PROXY && v == ADMIN_CONFIG {
 		return c.handleShowProxyConfig()
@@ -349,12 +349,12 @@ func (c *ClientConn) handleAdminShow(k, v string) (*mysql.Resultset, error) {
 		return c.handleShowBlackSqlConfig()
 	}
 
-	return nil, errors.ErrCmdUnsupport
+	return nil, errors.ErrCmdUnsupported
 }
 
 func (c *ClientConn) handleAdminChange(k, v string) error {
 	if len(k) == 0 || len(v) == 0 {
-		return errors.ErrCmdUnsupport
+		return errors.ErrCmdUnsupported
 	}
 	if k == ADMIN_LOG_SQL {
 		return c.handleChangeLogSql(v)
@@ -368,12 +368,12 @@ func (c *ClientConn) handleAdminChange(k, v string) error {
 		return c.handleChangeProxy(v)
 	}
 
-	return errors.ErrCmdUnsupport
+	return errors.ErrCmdUnsupported
 }
 
 func (c *ClientConn) handleAdminAdd(k, v string) error {
 	if len(k) == 0 || len(v) == 0 {
-		return errors.ErrCmdUnsupport
+		return errors.ErrCmdUnsupported
 	}
 	if k == ADMIN_ALLOW_IP {
 		return c.handleAddAllowIP(v)
@@ -383,12 +383,12 @@ func (c *ClientConn) handleAdminAdd(k, v string) error {
 		return c.handleAddBlackSql(v)
 	}
 
-	return errors.ErrCmdUnsupport
+	return errors.ErrCmdUnsupported
 }
 
 func (c *ClientConn) handleAdminDelete(k, v string) error {
 	if len(k) == 0 || len(v) == 0 {
-		return errors.ErrCmdUnsupport
+		return errors.ErrCmdUnsupported
 	}
 	if k == ADMIN_ALLOW_IP {
 		return c.handleDelAllowIP(v)
@@ -398,7 +398,7 @@ func (c *ClientConn) handleAdminDelete(k, v string) error {
 		return c.handleDelBlackSql(v)
 	}
 
-	return errors.ErrCmdUnsupport
+	return errors.ErrCmdUnsupported
 }
 
 func (c *ClientConn) handleShowProxyConfig() (*mysql.Resultset, error) {
@@ -706,11 +706,11 @@ func (c *ClientConn) handleDelBlackSql(v string) error {
 
 func (c *ClientConn) handleAdminSave(k string, v string) error {
 	if len(k) == 0 || len(v) == 0 {
-		return errors.ErrCmdUnsupport
+		return errors.ErrCmdUnsupported
 	}
 	if k == ADMIN_PROXY && v == ADMIN_CONFIG {
 		return c.proxy.SaveProxyConfig()
 	}
 
-	return errors.ErrCmdUnsupport
+	return errors.ErrCmdUnsupported
 }

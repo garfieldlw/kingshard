@@ -49,8 +49,7 @@ type ClientConn struct {
 	user string
 	db   string
 
-	salt   []byte
-	plugin string
+	salt []byte
 
 	nodes  map[string]*backend.Node
 	schema *Schema
@@ -136,7 +135,7 @@ func (c *ClientConn) writeInitialHandshake() error {
 	data = append(data, mysql.MinProtocolVersion)
 
 	//server version[00]
-	data = append(data, mysql.ServerVersion...)
+	data = append(data, mysql.Defautl_Mysql_Server_Version...)
 	data = append(data, 0)
 
 	//connection id
@@ -173,7 +172,7 @@ func (c *ClientConn) writeInitialHandshake() error {
 	//filter [00]
 	data = append(data, 0)
 
-	data = append(data, c.plugin...)
+	data = append(data, mysql.Default_Mysql_Auth_Plugin...)
 	data = append(data, 0)
 
 	return c.writePacket(data)
@@ -231,7 +230,7 @@ func (c *ClientConn) readHandshakeResponse() error {
 	}
 
 	//check password
-	checkAuth := mysql.CalcPassword(c.plugin, c.salt, c.proxy.users[c.user])
+	checkAuth := mysql.CalcPassword(mysql.Default_Mysql_Auth_Plugin, c.salt, c.proxy.users[c.user])
 	if !bytes.Equal(auth, checkAuth) {
 		golog.Error("ClientConn", "readHandshakeResponse", "error", 0, "auth", auth, "checkAuth", checkAuth, "client_user", c.user, "config_set_user", c.user, "password", c.proxy.users[c.user])
 		return mysql.NewDefaultError(mysql.ER_ACCESS_DENIED_ERROR, c.user, c.c.RemoteAddr().String(), "Yes")

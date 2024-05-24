@@ -243,6 +243,23 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	s.slowLogTime[s.slowLogTimeIndex] = cfg.SlowLogTime
 	s.configVer = 0
 
+	if len(cfg.MysqlVersion) == 0 {
+		cfg.MysqlVersion = mysql.Mysql_Version_57
+	}
+
+	switch cfg.MysqlVersion {
+	case mysql.Mysql_Version_57:
+		mysql.Default_Mysql_Version = cfg.MysqlVersion
+		mysql.Defautl_Mysql_Server_Version = mysql.Mysql_Server_Version_57
+		mysql.Default_Mysql_Auth_Plugin = mysql.AUTH_PLUGIN_NATIVE_PASSWORD
+	case mysql.Mysql_Version_84:
+		mysql.Default_Mysql_Version = cfg.MysqlVersion
+		mysql.Defautl_Mysql_Server_Version = mysql.Mysql_Server_Version_84
+		mysql.Default_Mysql_Auth_Plugin = mysql.AUTH_PLUGIN_CACHING_SHA2_PASSWORD
+	default:
+		return nil, errors.ErrInvalidMysqlVersion
+	}
+
 	if len(cfg.Charset) == 0 {
 		cfg.Charset = mysql.DEFAULT_CHARSET //utf8
 	}
@@ -301,11 +318,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		return nil, err
 	}
 
-	golog.Info("server", "NewServer", "Server running", 0,
-		"netProto",
-		netProto,
-		"address",
-		s.addr)
+	golog.Info("server", "NewServer", "Server running", 0, "netProto", netProto, "address", s.addr)
 	return s, nil
 }
 
@@ -346,7 +359,6 @@ func (s *Server) newClientConn(co net.Conn) *ClientConn {
 	c.status = mysql.SERVER_STATUS_AUTOCOMMIT
 
 	c.salt, _ = mysql.RandomBuf(20)
-	c.plugin = mysql.AUTH_PLUGIN_NATIVE_PASSWORD
 
 	c.txConns = make(map[*backend.Node]*backend.BackendConn)
 
@@ -410,7 +422,7 @@ func (s *Server) ChangeProxy(v string) error {
 		status = Unknown
 	}
 	if status == Unknown {
-		return errors.ErrCmdUnsupport
+		return errors.ErrCmdUnsupported
 	}
 
 	if s.statusIndex == 0 {
@@ -427,7 +439,7 @@ func (s *Server) ChangeProxy(v string) error {
 func (s *Server) ChangeLogSql(v string) error {
 	v = strings.ToLower(v)
 	if v != golog.LogOn && v != golog.LogOff {
-		return errors.ErrCmdUnsupport
+		return errors.ErrCmdUnsupported
 	}
 	if s.logSqlIndex == 0 {
 		s.logSql[1] = v
